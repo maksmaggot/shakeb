@@ -3,34 +3,34 @@
 namespace App\Controller;
 
 use App\Entity\User;
+use App\Event\RegisterUserEvent;
 use App\Form\UserType;
 use App\Repository\UserRepository;
 use App\Service\CodeGenerator;
-use App\Service\Mailer;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 class RegisterController extends AbstractController
 {
+
     /**
      * @Route("/register", name="register")
      * @param UserPasswordEncoderInterface $passwordEncoder
      * @param Request $request
      * @param CodeGenerator $codeGenerator
-     * @param Mailer $mailer
+     * @param EventDispatcherInterface $eventDispatcher
      * @return Response
-     * @throws \Twig\Error\LoaderError
-     * @throws \Twig\Error\RuntimeError
-     * @throws \Twig\Error\SyntaxError
+     * @throws \Exception
      */
     public function register(
         UserPasswordEncoderInterface $passwordEncoder,
         Request $request,
         CodeGenerator $codeGenerator,
-        Mailer $mailer)
+        EventDispatcherInterface $eventDispatcher)
     {
         $user = new User;
         $form = $this->createForm(
@@ -52,7 +52,9 @@ class RegisterController extends AbstractController
 
             $em->persist($user);
             $em->flush();
-            $mailer->sendConfirmationMessage($user);
+
+            $eventDispatcher->dispatch(new RegisterUserEvent($user));
+
         }
 
         return $this->render('security/registration.html.twig', [
