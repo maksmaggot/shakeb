@@ -1,0 +1,15 @@
+{% extends 'base.html.twig' %}
+
+{% block title %} Registration {% endblock %}
+
+{% block body %}
+    <div class="container">
+        <h3 class="text-center">Registration</h3>
+    </div>
+    {{ form_start(form) }}
+    {{ form_row(form.email, { 'label': ' '}) }}
+    {{ form_row(form.plainPassword.first, {'label': ' ', 'class': 'form-control'}) }}
+    {{ form_row(form.plainPassword.second, {'label': ' ', 'help': 'Повторите пароль' }) }}
+    {{ form_row(form._token) }}
+    <button type="submit" class="btn btn-success" formnovalidate>Зарегистрироваться</button>
+{% endblock %}
