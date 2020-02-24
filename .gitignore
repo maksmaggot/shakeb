@@ -21,6 +21,7 @@ var
 ###< service-dirs ###
 
 ###> symfony/webpack-encore-bundle ###
+assets
 /node_modules/
 /public/build/
 npm-debug.log
