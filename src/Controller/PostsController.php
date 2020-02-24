@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Post;
 use App\Form\PostType;
 use App\Repository\PostRepository;
+use Cocur\Slugify\Slugify;
 use Cocur\Slugify\SlugifyInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -97,4 +98,62 @@ class PostsController extends AbstractController
 
     }
 
+    /**
+     * @Route("/posts/{slug}/edit", name="blog_post_edit")
+     * @param Post $post
+     * @param Request $request
+     * @param Slugify $slugify
+     * @return RedirectResponse|Response
+     */
+    public function edit(Post $post, Request $request, Slugify $slugify)
+    {
+        $form = $this->createForm(PostType::class, $post);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $post->setSlug($slugify->slugify($post->getTitle()));
+
+            $em = $this->getDoctrine()->getManager();
+            $em->persist($post);
+            $em->flush();
+
+            return $this->redirectToRoute('blog_posts');
+        }
+
+        return $this->render('posts/create.html.twig',
+            [
+                'form' => $form->createView()
+            ]);
+    }
+
+    /**
+     * @Route("/posts/{slug}/delete", name="blog_post_delete")
+     * @param Post $post
+     * @return RedirectResponse
+     */
+    public function delete(Post $post)
+    {
+        $em = $this->getDoctrine()->getManager();
+        $em->persist($post);
+        $em->flush();
+
+        return $this->redirectToRoute('blog_posts');
+    }
+
+    /**
+     * @Route("/posts/search", name="blog_search")
+     * @param Request $request
+     * @return Response
+     */
+    public function search(Request $request)
+    {
+        $query = $request->query->get('q');
+
+        $posts = $this->postRepository->searchByQuery($query);
+
+        return $this->render('posts/query_post.html.twig',
+            [
+                'posts' => $posts
+            ]);
+    }
 }
