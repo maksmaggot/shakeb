@@ -7,6 +7,7 @@ use App\Event\RegisterUserEvent;
 use App\Form\UserType;
 use App\Repository\UserRepository;
 use App\Service\CodeGenerator;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -16,6 +17,19 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 class RegisterController extends AbstractController
 {
+    /**
+     * @var EntityManagerInterface
+     */
+    private $em;
+
+    /**
+     * RegisterController constructor.
+     * @param EntityManagerInterface $em
+     */
+    public function __construct(EntityManagerInterface $em)
+    {
+        $this->em = $em;
+    }
 
     /**
      * @Route("/register", name="register")
@@ -48,10 +62,8 @@ class RegisterController extends AbstractController
             $user->setPassword($password);
             $user->setConfirmationCode($codeGenerator->getConfirmationCode());
 
-            $em = $this->getDoctrine()->getManager();
-
-            $em->persist($user);
-            $em->flush();
+            $this->em->persist($user);
+            $this->em->flush();
 
             $eventDispatcher->dispatch(new RegisterUserEvent($user));
 
@@ -81,8 +93,8 @@ class RegisterController extends AbstractController
         $user->setConfirmationCode('');
         $em = $this->getDoctrine()->getManager();
 
-        $em->persist($user);
-        $em->flush();
+        $this->em->persist($user);
+        $this->em->flush();
 
         return $this->render('security/account_confirm.html.twig',
             ['user' => $user]

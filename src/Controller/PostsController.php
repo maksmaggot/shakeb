@@ -7,6 +7,7 @@ use App\Form\PostType;
 use App\Repository\PostRepository;
 use Cocur\Slugify\Slugify;
 use Cocur\Slugify\SlugifyInterface;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -27,15 +28,21 @@ class PostsController extends AbstractController
     private $slugify;
 
     /**
+     * @var EntityManagerInterface
+     */
+    private $em;
+
+    /**
      * PostsController constructor.
      * @param PostRepository $postRepository
+     * @param EntityManagerInterface $em
      * @param SlugifyInterface $slugify
      */
-    public function __construct(PostRepository $postRepository, SlugifyInterface $slugify)
+    public function __construct(PostRepository $postRepository, EntityManagerInterface $em, SlugifyInterface $slugify)
     {
-
         $this->postRepository = $postRepository;
         $this->slugify = $slugify;
+        $this->em = $em;
     }
 
     /**
@@ -70,8 +77,8 @@ class PostsController extends AbstractController
     /**
      * @Route("/post_create", name="blog_create")
      * @param Request $request
-     * @throws \Exception
      * @return Response|RedirectResponse
+     * @throws \Exception
      */
     public function addPost(Request $request)
     {
@@ -83,9 +90,9 @@ class PostsController extends AbstractController
             $post->setSlug($this->slugify->slugify($post->getTitle()));
             $post->setCreatedAt(new \DateTime());
 
-            $em = $this->getDoctrine()->getManager();
-            $em->persist($post);
-            $em->flush();
+
+            $this->em->persist($post);
+            $this->em->flush();
 
             return $this->redirectToRoute('blog_posts');
 
@@ -93,9 +100,8 @@ class PostsController extends AbstractController
 
         return $this->render('posts/create.html.twig',
             [
-               'form' => $form->createView()
+                'form' => $form->createView()
             ]);
-
     }
 
     /**
@@ -113,9 +119,8 @@ class PostsController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $post->setSlug($slugify->slugify($post->getTitle()));
 
-            $em = $this->getDoctrine()->getManager();
-            $em->persist($post);
-            $em->flush();
+            $this->em->persist($post);
+            $this->em->flush();
 
             return $this->redirectToRoute('blog_posts');
         }
@@ -133,9 +138,8 @@ class PostsController extends AbstractController
      */
     public function delete(Post $post)
     {
-        $em = $this->getDoctrine()->getManager();
-        $em->persist($post);
-        $em->flush();
+        $this->em->remove($post);
+        $this->em->flush();
 
         return $this->redirectToRoute('blog_posts');
     }
